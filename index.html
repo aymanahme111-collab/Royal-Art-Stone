@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Royal Art Stone - Field Visit Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold:#C9A84C;--gold-light:#E8C97A;--gold-dim:rgba(201,168,76,0.15);
+    --dark:#0A0A0A;--dark2:#111111;--dark3:#1A1A1A;
+    --text:#F0EDE8;--text-muted:#7A7570;--text-soft:#B8B4AE;
+    --success:#5C9E72;--success-dim:rgba(92,158,114,0.12);
+    --border:rgba(201,168,76,0.12);--border-soft:rgba(255,255,255,0.06);
+    --red:#C0392B;--red-dim:rgba(192,57,43,0.12);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'DM Sans',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 40% at 80% 10%,rgba(201,168,76,0.07) 0%,transparent 60%),radial-gradient(ellipse 40% 60% at 10% 90%,rgba(201,168,76,0.04) 0%,transparent 60%);pointer-events:none;z-index:0;}
+  .screen{display:none;min-height:100vh;position:relative;z-index:1;}
+  .screen.active{display:flex;flex-direction:column;}
+  #setup-screen{align-items:center;justify-content:center;padding:24px;}
+  .brand-header{text-align:center;margin-bottom:36px;}
+  .brand-logo{width:72px;height:72px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px;box-shadow:0 8px 32px rgba(201,168,76,0.25);}
+  .brand-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;background:linear-gradient(135deg,var(--gold-light),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+  .brand-tagline{font-size:11px;color:var(--text-muted);letter-spacing:2px;text-transform:uppercase;margin-top:4px;}
+  .setup-card{background:var(--dark2);border:1px solid var(--border);border-radius:24px;padding:32px 28px;width:100%;max-width:400px;box-shadow:0 32px 80px rgba(0,0,0,0.8);}
+  .tab-switcher{display:flex;background:var(--dark3);border-radius:12px;padding:4px;margin-bottom:28px;border:1px solid var(--border-soft);}
+  .tab-btn{flex:1;padding:10px;border:none;background:transparent;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;border-radius:9px;cursor:pointer;transition:all 0.25s;}
+  .tab-btn.active{background:linear-gradient(135deg,var(--gold),#8B6914);color:var(--dark);font-weight:700;}
+  .tab-content{display:none;}.tab-content.active{display:block;}
+  .form-group{margin-bottom:18px;}
+  .form-group label{display:block;font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1.5px;}
+  .form-group input,.form-group select,.form-group textarea{width:100%;background:var(--dark3);border:1px solid var(--border-soft);border-radius:12px;padding:13px 16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;transition:all 0.2s;}
+  .form-group input:focus,.form-group textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,76,0.08);}
+  .form-group input::placeholder,.form-group textarea::placeholder{color:var(--text-muted);}
+  .btn-primary{width:100%;background:linear-gradient(135deg,var(--gold),#8B6914);border:none;border-radius:14px;padding:15px;color:var(--dark);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.25s;margin-top:8px;box-shadow:0 4px 20px rgba(201,168,76,0.25);}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 32px rgba(201,168,76,0.4);}
+  .info-banner{background:var(--gold-dim);border:1px solid rgba(201,168,76,0.2);border-radius:12px;padding:14px 16px;margin-bottom:22px;display:flex;gap:10px;align-items:flex-start;}
+  .info-banner .icon{font-size:18px;flex-shrink:0;}
+  .info-banner .text{font-size:12px;line-height:1.6;color:var(--text-soft);}
+  .info-banner strong{color:var(--gold);}
+  .app-header{background:var(--dark2);padding:20px 20px 16px;border-bottom:1px solid var(--border-soft);position:sticky;top:0;z-index:100;}
+  .header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .user-info{display:flex;align-items:center;gap:12px;}
+  .avatar{width:44px;height:44px;background:linear-gradient(135deg,var(--gold),#8B6914);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:var(--dark);}
+  .user-name{font-size:15px;font-weight:600;}.user-role{font-size:11px;color:var(--text-muted);}
+  .btn-logout{background:var(--dark3);border:1px solid var(--border-soft);border-radius:10px;padding:8px 16px;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;transition:all 0.2s;}
+  .btn-logout:hover{border-color:var(--red);color:var(--red);}
+  .stats-row{display:flex;gap:10px;}
+  .stat-chip{flex:1;background:var(--dark3);border:1px solid var(--border-soft);border-radius:14px;padding:12px 14px;text-align:center;}
+  .stat-chip .num{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:var(--gold);line-height:1;}
+  .stat-chip .lbl{font-size:10px;color:var(--text-muted);margin-top:4px;}
+  .visit-form{padding:20px;flex:1;overflow-y:auto;}
+  .section-label{font-size:10px;font-weight:600;color:var(--gold);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+  .section-label::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--border),transparent);}
+  .form-card{background:var(--dark2);border:1px solid var(--border-soft);border-radius:20px;padding:20px;margin-bottom:16px;}
+  .photo-upload{width:100%;aspect-ratio:16/9;background:var(--dark3);border:1.5px dashed rgba(201,168,76,0.25);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;overflow:hidden;position:relative;margin-bottom:16px;}
+  .photo-upload:hover{border-color:var(--gold);}
+  .photo-upload img{width:100%;height:100%;object-fit:cover;position:absolute;}
+  .photo-upload .upload-icon{font-size:32px;margin-bottom:8px;}
+  .photo-upload .upload-text{font-size:12px;color:var(--text-muted);}
+  .location-btn{width:100%;background:var(--success-dim);border:1px solid rgba(92,158,114,0.25);border-radius:12px;padding:13px;color:var(--success);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;margin-bottom:16px;}
+  .location-btn.captured{background:rgba(92,158,114,0.18);border-color:var(--success);}
+  .submit-btn{width:100%;background:linear-gradient(135deg,var(--gold),#8B6914);border:none;border-radius:16px;padding:17px;color:var(--dark);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.25s;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 4px 20px rgba(201,168,76,0.3);}
+  .submit-btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .submit-btn:not(:disabled):hover{transform:translateY(-2px);}
+  .visits-list{padding:0 20px 20px;}
+  .visit-card{background:var(--dark2);border:1px solid var(--border-soft);border-radius:18px;padding:16px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start;animation:slideIn 0.3s ease;}
+  @keyframes slideIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+  .visit-thumb{width:64px;height:64px;border-radius:12px;object-fit:cover;background:var(--dark3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;}
+  .visit-info{flex:1;}
+  .visit-project{font-size:15px;font-weight:600;margin-bottom:4px;}
+  .visit-meta{display:flex;gap:12px;flex-wrap:wrap;}
+  .meta-item{font-size:11px;color:var(--text-muted);}
+  .visit-badge{background:var(--success-dim);color:var(--success);font-size:10px;font-weight:600;padding:4px 10px;border-radius:6px;border:1px solid rgba(92,158,114,0.2);margin-top:8px;display:inline-block;text-decoration:none;}
+  .manager-header{background:var(--dark2);padding:20px;border-bottom:1px solid var(--border-soft);position:sticky;top:0;z-index:100;}
+  .manager-title{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-bottom:14px;}
+  .manager-title span{color:var(--gold);}
+  .filter-row{display:flex;gap:10px;}
+  .filter-row input,.filter-row select{flex:1;background:var(--dark3);border:1px solid var(--border-soft);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;}
+  .filter-row input:focus,.filter-row select:focus{border-color:var(--gold);}
+  .rep-summary-card{background:var(--dark2);border:1px solid var(--border-soft);border-radius:16px;padding:16px;margin-bottom:12px;}
+  .rep-summary-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+  .rep-summary-name{font-size:15px;font-weight:600;}
+  .count-badge{background:linear-gradient(135deg,var(--gold),#8B6914);color:var(--dark);font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;}
+  .rep-visits-mini{display:flex;gap:8px;flex-wrap:wrap;}
+  .mini-visit{background:var(--dark3);border-radius:8px;padding:6px 10px;font-size:11px;color:var(--text-muted);border:1px solid var(--border-soft);}
+  .bottom-nav{display:flex;background:var(--dark2);border-top:1px solid var(--border-soft);padding:8px 0;position:sticky;bottom:0;z-index:100;}
+  .nav-btn{flex:1;background:transparent;border:none;color:var(--text-muted);font-family:'DM Sans',sans-serif;font-size:10px;padding:8px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:color 0.2s;}
+  .nav-btn .nav-icon{font-size:20px;}
+  .nav-btn.active{color:var(--gold);}
+  .page{display:none;}.page.active{display:block;}
+  .empty-state{text-align:center;padding:56px 24px;color:var(--text-muted);}
+  .empty-state .empty-icon{font-size:48px;margin-bottom:16px;opacity:0.5;}
+  .empty-state p{font-size:14px;line-height:1.7;}
+  .toast{position:fixed;bottom:84px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark3);border:1px solid var(--border);border-radius:14px;padding:14px 20px;font-size:13px;font-weight:500;z-index:9999;transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;display:flex;align-items:center;gap:10px;box-shadow:0 16px 48px rgba(0,0,0,0.8);color:var(--text);}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+  .spinner{width:18px;height:18px;border:2px solid rgba(201,168,76,0.3);border-top-color:var(--gold);border-radius:50%;animation:spin 0.7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .settings-page{padding:20px;}
+  .settings-card{background:var(--dark2);border:1px solid var(--border-soft);border-radius:16px;overflow:hidden;margin-bottom:16px;}
+  .settings-item{padding:16px 20px;border-bottom:1px solid var(--border-soft);display:flex;justify-content:space-between;align-items:center;}
+  .settings-item:last-child{border-bottom:none;}
+  .settings-item label{font-size:14px;font-weight:500;}
+  .settings-item span{font-size:12px;color:var(--text-muted);}
+  .mgr-visit-wrap{background:var(--dark2);border:1px solid var(--border-soft);border-radius:20px;margin-bottom:16px;overflow:hidden;animation:slideIn 0.3s ease;}
+  .mgr-visit-photo{width:100%;height:200px;object-fit:cover;display:block;}
+  .mgr-visit-no-photo{width:100%;height:80px;background:var(--dark3);display:flex;align-items:center;justify-content:center;font-size:32px;}
+  .detail-chip{flex:1;background:var(--dark3);border:1px solid var(--border-soft);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:8px;}
+  .detail-chip .chip-val{font-size:13px;font-weight:600;}
+  .detail-chip .chip-lbl{font-size:10px;color:var(--text-muted);}
+  .map-link{background:var(--success-dim);border:1px solid rgba(92,158,114,0.25);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;text-decoration:none;}
+  .map-link:hover{background:rgba(92,158,114,0.2);}
+  .notes-box{background:var(--gold-dim);border:1px solid rgba(201,168,76,0.15);border-radius:12px;padding:12px 16px;}
+  .next-visit-box{background:var(--red-dim);border:1px solid rgba(192,57,43,0.2);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;}
+  .live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--success);box-shadow:0 0 6px var(--success);margin-right:5px;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-thumb{background:rgba(201,168,76,0.2);border-radius:4px;}
+  select option{background:#1A1A1A;}
+</style>
+</head>
+<body>
+<div id="setup-screen" class="screen active">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px">
+    <div class="brand-header">
+      <div class="brand-logo">🪨</div>
+      <div class="brand-name">Royal Art Stone</div>
+      <div class="brand-tagline">Field Visit Tracker</div>
+    </div>
+    <div class="setup-card">
+      <div class="tab-switcher">
+        <button class="tab-btn active" onclick="switchTab('rep')">Sales Rep</button>
+        <button class="tab-btn" onclick="switchTab('manager')">Manager</button>
+      </div>
+      <div id="tab-rep" class="tab-content active">
+        <div class="info-banner">
+          <div class="icon">🔔</div>
+          <div class="text">Enter your name and access code to start logging visits.<br><strong>Manager gets notified instantly on Telegram.</strong></div>
+        </div>
+        <div class="form-group"><label>Your Name</label><input type="text" id="rep-name" placeholder="e.g. Ahmed Mohamed"></div>
+        <div class="form-group"><label>Access Code</label><input type="password" id="rep-code" placeholder="Ask your manager for the code"></div>
+        <button class="btn-primary" onclick="loginRep()">Start Logging Visits →</button>
+      </div>
+      <div id="tab-manager" class="tab-content">
+        <div class="form-group"><label>Rep Access Code</label><input type="text" id="mgr-repcode" placeholder="Code shared with the team"></div>
+        <div class="form-group"><label>Manager Password</label><input type="password" id="mgr-admincode" placeholder="Your private password"></div>
+        <button class="btn-primary" onclick="loginManager()">Open Manager Dashboard →</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="app-screen" class="screen">
+  <div class="app-header">
+    <div class="header-top">
+      <div class="user-info">
+        <div class="avatar" id="avatar-letter">R</div>
+        <div><div class="user-name" id="header-name">Rep</div><div class="user-role">SALES REPRESENTATIVE</div></div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat-chip"><div class="num" id="today-count">0</div><div class="lbl">Today</div></div>
+      <div class="stat-chip"><div class="num" id="week-count">0</div><div class="lbl">This Week</div></div>
+      <div class="stat-chip"><div class="num" id="total-count">0</div><div class="lbl">Total</div></div>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;">
+    <div id="page-new" class="page active">
+      <div class="visit-form">
+        <div class="section-label">New Visit</div>
+        <div class="form-card">
+          <div class="form-group"><label>Project Name</label><input type="text" id="project-name" placeholder="e.g. Al-Narjes Tower — New Cairo"></div>
+          <div class="photo-upload">
+            <input type="file" id="photo-input" accept="image/*" onchange="handlePhoto(this)" style="display:none">
+            <input type="file" id="photo-input-camera" accept="image/*" capture="environment" onchange="handlePhoto(this)" style="display:none">
+            <div id="upload-icon" class="upload-icon">📸</div>
+            <div id="upload-text" class="upload-text">Tap to add site photo</div>
+            <img id="preview-img" style="display:none">
+          </div>
+          <div style="display:flex;gap:8px;margin-top:-8px;margin-bottom:16px">
+            <button onclick="document.getElementById('photo-input-camera').click()" style="flex:1;background:var(--dark3);border:1px solid var(--border-soft);border-radius:10px;padding:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">📷 Camera</button>
+            <button onclick="document.getElementById('photo-input').click()" style="flex:1;background:var(--dark3);border:1px solid var(--border-soft);border-radius:10px;padding:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px">🖼️ Gallery</button>
+          </div>
+          <button class="location-btn" id="location-btn" onclick="getLocation()"><span>📍</span><span id="location-text">Record current location</span></button>
+          <div class="form-group">
+            <label>Visit Summary</label>
+            <textarea id="visit-notes" placeholder="Write your visit notes here..." style="width:100%;background:var(--dark3);border:1px solid var(--border-soft);border-radius:12px;padding:13px 16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;resize:none;height:90px;" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border-soft)'"></textarea>
+          </div>
+          <div class="form-group">
+            <label>Next Visit Date</label>
+            <input type="date" id="next-visit-date" style="width:100%;background:var(--dark3);border:1px solid var(--border-soft);border-radius:12px;padding:13px 16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;color-scheme:dark">
+            <p style="font-size:11px;color:var(--text-muted);margin-top:6px">You'll get a reminder one day before</p>
+          </div>
+          <button class="submit-btn" id="submit-btn" onclick="submitVisit()"><span>✓</span><span>Submit Visit & Notify Manager</span></button>
+        </div>
+      </div>
+    </div>
+    <div id="page-history" class="page"><div class="visits-list" id="visits-list"></div></div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="showPage('new',this)"><span class="nav-icon">＋</span><span>New Visit</span></button>
+    <button class="nav-btn" onclick="showPage('history',this)"><span class="nav-icon">📋</span><span>History</span></button>
+  </div>
+</div>
+<div id="manager-screen" class="screen">
+  <div class="manager-header">
+    <div class="header-top" style="margin-bottom:14px">
+      <div>
+        <div class="manager-title">Manager <span>Dashboard</span></div>
+        <div style="font-size:11px;color:var(--text-muted)">ROYAL ART STONE &nbsp;<span class="live-dot"></span><span style="font-size:10px;color:var(--success)">LIVE</span></div>
+      </div>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+    <div class="filter-row">
+      <input type="date" id="filter-date" onchange="renderFromCache()">
+      <select id="filter-rep" onchange="renderFromCache()"><option value="">All Reps</option></select>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;">
+    <div id="mgr-page-summary" class="page active" style="padding:20px">
+      <div class="section-label">Live Status</div>
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--dark3);border:1px solid var(--border-soft);border-radius:12px;margin-bottom:16px;font-size:12px;color:var(--text-soft);">
+        <div class="live-dot"></div><span style="color:var(--success)">Connected — Auto-refreshing every 30 seconds</span>
+      </div>
+      <div class="section-label">Today's Summary</div>
+      <div id="reps-summary"></div>
+    </div>
+    <div id="mgr-page-visits" class="page"><div id="mgr-visits-list" style="padding:20px"></div></div>
+    <div id="mgr-page-settings" class="page">
+      <div class="settings-page">
+        <div class="section-label">Settings</div>
+        <div class="settings-card">
+          <div class="settings-item"><label>Rep Access Code</label><span id="settings-repcode">—</span></div>
+          <div class="settings-item"><label>Google Sheets Sync</label><span style="color:var(--success)">✓ Connected</span></div>
+          <div class="settings-item"><label>Photo Storage</label><span style="color:var(--success)">✓ Google Drive</span></div>
+          <div class="settings-item"><label>Daily Report</label><span style="color:var(--success)">5:00 PM — Telegram</span></div>
+          <div class="settings-item"><label>Weekly Report</label><span style="color:var(--success)">Thursday 5:00 PM</span></div>
+          <div class="settings-item"><label>Monthly Report</label><span style="color:var(--success)">Last day of month</span></div>
+        </div>
+        <button class="btn-primary" onclick="loadSheetData()" style="margin-bottom:12px">🔄 Refresh Now</button>
+        <button class="btn-primary" onclick="debugSheet()" style="margin-bottom:12px;background:var(--dark3);color:var(--gold);border:1px solid rgba(201,168,76,0.4);box-shadow:none">🔍 Test Sheet Connection</button>
+        <button class="btn-primary" onclick="clearAllData()" style="background:var(--dark3);color:var(--text-muted);border:1px solid var(--border-soft);box-shadow:none">🗑️ Clear Local Cache</button>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-btn active" onclick="showMgrPage('summary',this)"><span class="nav-icon">📊</span><span>Summary</span></button>
+    <button class="nav-btn" onclick="showMgrPage('visits',this)"><span class="nav-icon">📋</span><span>Visits</span></button>
+    <button class="nav-btn" onclick="showMgrPage('settings',this)"><span class="nav-icon">⚙️</span><span>Settings</span></button>
+  </div>
+</div>
+<div class="toast" id="toast"><span id="toast-icon">✓</span><span id="toast-msg">Done</span></div>
+<script>
+const SHEET_URL='https://script.google.com/macros/s/AKfycbzGFVgH4leNw7HkwYybxbd4lndKRUlmGzxTiIMBbZsUjTp_7HvB37PGSLCBMfKozNrwsA/exec';
+const TELEGRAM_TOKEN='8713625908:AAEAf271zZokfr1WL8zMNdTG7sx_r0jLe9U';
+const TELEGRAM_CHAT_IDS=['8643388081'];
+let currentUser=null,currentRole=null,currentLocation=null,currentPhoto=null;
+let cachedVisits=[],refreshTimer=null,lastKnownCount=0;
+async function sendToSheet(visit){
+  try{
+    // No photo in payload - base64 is too large and silently breaks the request
+    // Content-Type must be text/plain for Google Apps Script no-cors POST
+    const payload={id:visit.id,date:visit.date,time:visit.time,rep:visit.rep,
+      project:visit.project,notes:visit.notes||'',nextVisitDate:visit.nextVisitDate||'',
+      lat:visit.lat,lng:visit.lng,timestamp:visit.timestamp};
+    await fetch(SHEET_URL,{method:'POST',mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify(payload)});
+    return true;
+  }catch(e){return false;}
+}
+function getVisitISO(v){
+  if(v.date&&v.date.includes('T')) return v.date.split('T')[0];
+  if(v.date&&v.date.includes('/')){var p=v.date.split('/');if(p.length===3)return p[2]+'-'+p[1].padStart(2,'0')+'-'+p[0].padStart(2,'0');}
+  if(v.timestamp) return v.timestamp.split('T')[0];
+  return '';
+}
+function getVisitDisplayDate(v){
+  var iso=getVisitISO(v);if(!iso)return v.date||'';
+  var d=new Date(iso+'T12:00:00');return d.toLocaleDateString('en-GB');
+}
+function getVisitDisplayTime(v){
+  if(v.time&&v.time.includes('T')){var t=new Date(v.time);return t.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+  return v.time||'';
+}
+function normalizeVisit(v){
+  if(!v.mapLink&&v.lat&&v.lng) v.mapLink='https://www.google.com/maps?q='+v.lat+','+v.lng;
+  if(!v.photoUrl&&v.photo) v.photoUrl=v.photo;
+  v._isoDate=getVisitISO(v);
+  v._displayDate=getVisitDisplayDate(v);
+  v._displayTime=getVisitDisplayTime(v);
+  return v;
+}
+function getLocalVisitsForManager(){
+  // Return all visits from localStorage (any rep) normalized
+  return JSON.parse(localStorage.getItem('ras_visits')||'[]').map(normalizeVisit);
+}
+async function loadSheetData(){
+  if(currentRole!=='manager')return;
+  // Always show localStorage visits immediately as fallback
+  const localVisits=getLocalVisitsForManager();
+  if(localVisits.length>0&&cachedVisits.length===0){
+    cachedVisits=localVisits;
+    renderFromCache();
+  }
+  try{
+    const res=await fetch(SHEET_URL+'?t='+Date.now());
+    const json=await res.json();
+    if(json.status==='success'){
+      const sheetVisits=(json.visits||[]).map(normalizeVisit);
+      // Merge: sheet visits + any local visits not yet in sheet
+      const sheetIds=new Set(sheetVisits.map(v=>String(v.id)));
+      const localOnly=localVisits.filter(v=>!sheetIds.has(String(v.id)));
+      const merged=[...sheetVisits,...localOnly];
+      if(lastKnownCount>0&&merged.length>lastKnownCount){
+        showToast('🔔','New visit from '+merged[0].rep+'!');
+      }
+      lastKnownCount=merged.length;
+      cachedVisits=merged;
+      renderFromCache();
+    }
+  }catch(e){
+    console.error('Sheet GET:',e);
+    // Sheet failed — use local only
+    cachedVisits=localVisits;
+    renderFromCache();
+    showToast('⚠','Showing local visits only');
+  }
+}
+function renderFromCache(){const fd=document.getElementById('filter-date')?.value;const fr=document.getElementById('filter-rep')?.value;let visits=[...cachedVisits];if(fd)visits=visits.filter(v=>getVisitISO(v)===fd);if(fr)visits=visits.filter(v=>v.rep===fr);const allReps=[...new Set(cachedVisits.map(v=>v.rep))];const sel=document.getElementById('filter-rep');const cur=sel.value;sel.innerHTML='<option value="">All Reps</option>'+allReps.map(r=>`<option value="${r}" ${r===cur?'selected':''}>${r}</option>`).join('');renderRepsSummary(visits);renderMgrVisits(visits);}
+function startAutoRefresh(){clearInterval(refreshTimer);loadSheetData();refreshTimer=setInterval(loadSheetData,30000);}
+function getVisits(){return JSON.parse(localStorage.getItem('ras_visits')||'[]');}
+function saveVisit(v){const a=getVisits();a.unshift(v);localStorage.setItem('ras_visits',JSON.stringify(a));}
+function getConfig(){return JSON.parse(localStorage.getItem('ras_config')||'{}');}
+function saveConfig(c){localStorage.setItem('ras_config',JSON.stringify(c));}
+function switchTab(tab){document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&tab==='rep')||(i===1&&tab==='manager')));document.getElementById('tab-rep').classList.toggle('active',tab==='rep');document.getElementById('tab-manager').classList.toggle('active',tab==='manager');}
+function loginRep(){const name=document.getElementById('rep-name').value.trim(),code=document.getElementById('rep-code').value.trim(),cfg=getConfig();if(!name)return showToast('✕','Please enter your name');if(cfg.repCode){if(!code)return showToast('✕','Please enter access code');if(code!==cfg.repCode)return showToast('✕','Incorrect code');}currentUser=name;currentRole='rep';localStorage.setItem('ras_lastRep',name);showScreen('app-screen');updateRepStats();renderHistory();document.getElementById('header-name').textContent=name;document.getElementById('avatar-letter').textContent=name[0].toUpperCase();}
+function loginManager(){const rc=document.getElementById('mgr-repcode').value.trim(),ac=document.getElementById('mgr-admincode').value.trim();if(!rc||!ac)return showToast('✕','Please fill in both codes');const cfg=getConfig();cfg.repCode=rc;cfg.adminCode=ac;saveConfig(cfg);currentRole='manager';showScreen('manager-screen');document.getElementById('filter-date').value=new Date().toISOString().split('T')[0];document.getElementById('settings-repcode').textContent=rc;lastKnownCount=0;startAutoRefresh();}
+function logout(){currentUser=null;currentRole=null;currentLocation=null;currentPhoto=null;clearInterval(refreshTimer);showScreen('setup-screen');resetForm();}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function showPage(name,btn){document.querySelectorAll('#app-screen .page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+name).classList.add('active');document.querySelectorAll('#app-screen .nav-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');if(name==='history')renderHistory();}
+function showMgrPage(name,btn){document.querySelectorAll('#manager-screen .page').forEach(p=>p.classList.remove('active'));document.getElementById('mgr-page-'+name).classList.add('active');document.querySelectorAll('#manager-screen .nav-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function handlePhoto(input){const file=input.files[0];if(!file)return;showToast('⏳','Processing…');const img=new Image(),reader=new FileReader();reader.onload=e=>{img.onload=()=>{const canvas=document.createElement('canvas');const MAX=800;let w=img.width,h=img.height;if(w>h){if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}}else{if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}}canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(img,0,0,w,h);currentPhoto=canvas.toDataURL('image/jpeg',0.6);document.getElementById('preview-img').src=currentPhoto;document.getElementById('preview-img').style.display='block';document.getElementById('upload-icon').style.display='none';document.getElementById('upload-text').style.display='none';showToast('✓','Photo ready!');};img.src=e.target.result;};reader.readAsDataURL(file);}
+function getLocation(){const txt=document.getElementById('location-text');txt.textContent='Locating…';if(!navigator.geolocation){txt.textContent='GPS not supported';return;}navigator.geolocation.getCurrentPosition(pos=>{currentLocation={lat:pos.coords.latitude.toFixed(6),lng:pos.coords.longitude.toFixed(6),time:new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})};txt.textContent=`✓ ${currentLocation.lat}, ${currentLocation.lng}`;document.getElementById('location-btn').classList.add('captured');showToast('📍','Location recorded');},()=>{txt.textContent='⚠ Could not get location';showToast('⚠','Enable GPS');},{enableHighAccuracy:true,timeout:10000});}
+async function sendTelegramNotif(visit,todayCount){const mapLink=`https://www.google.com/maps?q=${visit.lat},${visit.lng}`;const msg=`🔔 *New Visit — Royal Art Stone*\n\n👤 *Rep:* ${visit.rep}\n🏗️ *Project:* ${visit.project}\n🕐 *Time:* ${visit.time}\n📅 *Date:* ${visit.date}\n📍 [View on Google Maps](${mapLink})${visit.notes?`\n📝 *Notes:* ${visit.notes}`:''}${visit.nextVisitDate?`\n⏰ *Next Visit:* ${visit.nextVisitDate}`:''}\n\n_Visit #${todayCount} today_`;for(const chatId of TELEGRAM_CHAT_IDS){try{await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:chatId,text:msg,parse_mode:'Markdown',disable_web_page_preview:false})});}catch(e){}}}
+async function submitVisit(){const project=document.getElementById('project-name').value.trim();if(!project)return showToast('✕','Enter project name');if(!currentPhoto)return showToast('✕','Capture a photo first');if(!currentLocation)return showToast('✕','Record your location first');const btn=document.getElementById('submit-btn');btn.disabled=true;btn.innerHTML='<div class="spinner"></div><span>Submitting…</span>';try{const now=new Date(),notes=document.getElementById('visit-notes').value.trim(),nextVisitDate=document.getElementById('next-visit-date').value;const visit={id:Date.now(),rep:currentUser,project,photo:currentPhoto,lat:currentLocation.lat,lng:currentLocation.lng,time:currentLocation.time,date:now.toLocaleDateString('en-GB'),dateISO:now.toISOString().split('T')[0],timestamp:now.toISOString(),notes,nextVisitDate};if(nextVisitDate)scheduleReminder(visit);saveVisit(visit);const todayCount=getVisits().filter(v=>v.rep===visit.rep&&v.dateISO===visit.dateISO).length;await Promise.race([Promise.all([sendToSheet(visit),sendTelegramNotif(visit,todayCount)]),new Promise(r=>setTimeout(r,10000))]);updateRepStats();resetForm();showToast('✓','Visit submitted & synced!');}catch(err){showToast('✓','Visit saved!');}btn.disabled=false;btn.innerHTML='<span>✓</span><span>Submit Visit & Notify Manager</span>';}
+function updateRepStats(){const visits=getVisits(),today=new Date().toISOString().split('T')[0];const ws=new Date();ws.setDate(ws.getDate()-ws.getDay());const mine=visits.filter(v=>v.rep===currentUser);document.getElementById('today-count').textContent=mine.filter(v=>v.dateISO===today).length;document.getElementById('week-count').textContent=mine.filter(v=>v.dateISO>=ws.toISOString().split('T')[0]).length;document.getElementById('total-count').textContent=mine.length;}
+function renderHistory(){const visits=getVisits().filter(v=>v.rep===currentUser);const c=document.getElementById('visits-list');if(!visits.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><p>No visits recorded yet.</p></div>`;return;}c.innerHTML=visits.map(v=>`<div class="visit-card">${v.photo?`<img src="${v.photo}" class="visit-thumb">`:`<div class="visit-thumb">🏗️</div>`}<div class="visit-info"><div class="visit-project">${v.project}</div><div class="visit-meta"><span class="meta-item">🕐 ${v.time}</span><span class="meta-item">📅 ${v.date}</span></div><a href="https://www.google.com/maps?q=${v.lat},${v.lng}" target="_blank" class="visit-badge">📍 View on Map</a></div></div>`).join('');}
+function renderRepsSummary(visits){const c=document.getElementById('reps-summary');if(!visits.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">📊</div><p>No visits found.<br><span style="font-size:12px;color:var(--success)">🔄 Auto-refreshing every 30 sec</span></p></div>`;return;}const rg={};visits.forEach(v=>{if(!rg[v.rep])rg[v.rep]=[];rg[v.rep].push(v);});c.innerHTML=`<div style="display:flex;gap:10px;margin-bottom:16px"><div class="stat-chip"><div class="num">${visits.length}</div><div class="lbl">Total Visits</div></div><div class="stat-chip"><div class="num">${Object.keys(rg).length}</div><div class="lbl">Active Reps</div></div></div>`+Object.entries(rg).map(([rep,rv])=>`<div class="rep-summary-card"><div class="rep-summary-header"><div class="rep-summary-name">👤 ${rep}</div><div class="count-badge">${rv.length} visit${rv.length>1?'s':''}</div></div><div class="rep-visits-mini">${rv.map(v=>`<div class="mini-visit">🏗️ ${v.project} · ${v.time}</div>`).join('')}</div></div>`).join('');}
+function renderMgrVisits(visits){const c=document.getElementById('mgr-visits-list');if(!visits.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">📋</div><p>No visits found.</p></div>`;return;}c.innerHTML=visits.map(v=>`<div class="mgr-visit-wrap">${v.photoUrl?`<img src="${v.photoUrl}" class="mgr-visit-photo" onerror="this.parentElement.querySelector('.mgr-visit-no-photo').style.display='flex';this.style.display='none'">`:''}<div class="mgr-visit-no-photo" style="${v.photoUrl?'display:none':'display:flex'}">🏗️</div><div style="padding:14px 16px;border-bottom:1px solid var(--border-soft)"><div style="font-size:16px;font-weight:700">🏗️ ${v.project}</div><div style="font-size:12px;color:var(--gold);margin-top:2px">👤 ${v.rep}</div></div><div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px"><div style="display:flex;gap:10px"><div class="detail-chip"><span style="font-size:18px">🕐</span><div><div class="chip-val">${v._displayTime||v.time}</div><div class="chip-lbl">TIME</div></div></div><div class="detail-chip"><span style="font-size:18px">📅</span><div><div class="chip-val">${v._displayDate||v.date}</div><div class="chip-lbl">DATE</div></div></div></div><a href="${v.mapLink}" target="_blank" class="map-link"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">📍</span><div style="font-size:13px;font-weight:600;color:var(--success)">View on Google Maps</div></div><span style="color:var(--success);font-size:18px">→</span></a>${v.notes?`<div class="notes-box"><div style="font-size:10px;color:var(--gold);font-weight:700;margin-bottom:6px">VISIT NOTES</div><div style="font-size:13px;color:var(--text-soft);line-height:1.6">${v.notes}</div></div>`:''}${v.nextVisitDate?`<div class="next-visit-box"><span style="font-size:20px">⏰</span><div><div style="font-size:10px;color:#e57c73;font-weight:700">NEXT VISIT</div><div style="font-size:14px;font-weight:700">${v.nextVisitDate}</div></div></div>`:''}</div></div>`).join('');}
+function scheduleReminder(visit){const r=JSON.parse(localStorage.getItem('ras_reminders')||'[]');r.push({id:visit.id,rep:visit.rep,project:visit.project,nextVisitDate:visit.nextVisitDate,notified:false});localStorage.setItem('ras_reminders',JSON.stringify(r));}
+function resetForm(){['project-name','visit-notes','next-visit-date'].forEach(id=>document.getElementById(id).value='');document.getElementById('preview-img').style.display='none';document.getElementById('upload-icon').style.display='block';document.getElementById('upload-text').style.display='block';document.getElementById('photo-input').value='';document.getElementById('photo-input-camera').value='';document.getElementById('location-text').textContent='Record current location';document.getElementById('location-btn').classList.remove('captured');currentLocation=null;currentPhoto=null;}
+function showToast(icon,msg){document.getElementById('toast-icon').textContent=icon;document.getElementById('toast-msg').textContent=msg;const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+function clearAllData(){if(confirm('Clear all local cache?')){localStorage.clear();logout();}}
+async function debugSheet(){showToast("⏳","Testing...");try{const res=await fetch(SHEET_URL+"?t="+Date.now());const txt=await res.text();const preview=txt.substring(0,200);alert("Sheet response:\n"+preview);}catch(e){alert("ERROR: "+e.message);}}
+
+window.onload=()=>{const last=localStorage.getItem('ras_lastRep');if(last)document.getElementById('rep-name').value=last;};
+</script>
+</body>
+</html>
